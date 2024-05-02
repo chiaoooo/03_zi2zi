@@ -1,199 +1,174 @@
-# zi2zi: Master Chinese Calligraphy with Conditional Adversarial Networks
 
-<p align="center">
-  <img src="assets/intro.gif" alt="animation", style="width: 350px;"/>
-</p>
+## zi2zi: Master Chinese Calligraphy with Conditional Adversarial Networks
 
-## How to Use
-### Step Zero
-Download tons of fonts as you please
-### Requirement
-* Python ~~2.7~~ 3.7
+- **WEB**
+
+https://kaonashi-tyc.github.io/2017/04/06/zi2zi.html
+
+- **官方**
+
+https://github.com/kaonashi-tyc/zi2zi
+
+- **修正後** 
+
+https://github.com/chiaoooo/zi2zi_tensorflow
+
+
+## 使用 Anaconda Prompt (Anaconda3) - 若要直接使用可以跳到程式執行部分
+
+#### Requirements
+
+```
+* Python = 3.7
 * CUDA
 * cudnn
-* Tensorflow ~~>= 1.0.1~~ 1.14.0
-* Pillow(PIL)
-* numpy >= 1.12.1
-* scipy ~~>= 0.18.1~~ 1.2.1
-* imageio
-
-[Detailed Information](https://hackmd.io/@zracShsQRW6KsIfEDHPQ7g/Sy6bueGvh "about zi2zi")
-
-
-# Original author
-# zi2zi: Master Chinese Calligraphy with Conditional Adversarial Networks
-
-<p align="center">
-  <img src="assets/intro.gif" alt="animation", style="width: 350px;"/>
-</p>
-
-## Introduction
-Learning eastern asian language typefaces with GAN. zi2zi(字到字, meaning from character to character) is an application and extension of the recent popular [pix2pix](https://github.com/phillipi/pix2pix) model to Chinese characters.
-
-Details could be found in this [**blog post**](https://kaonashi-tyc.github.io/2017/04/06/zi2zi.html).
-
-## Network Structure
-### Original Model
-![alt network](assets/network.png)
-
-The network structure is based off pix2pix with the addition of category embedding and two other losses, category loss and constant loss, from [AC-GAN](https://arxiv.org/abs/1610.09585) and [DTN](https://arxiv.org/abs/1611.02200) respectively.
-
-### Updated Model with Label Shuffling
-
-![alt network](assets/network_v2.png)
-
-After sufficient training, **d_loss** will drop to near zero, and the model's performance plateaued. **Label Shuffling** mitigate this problem by presenting new challenges to the model. 
-
-Specifically, within a given minibatch, for the same set of source characters, we generate two sets of target characters: one with correct embedding labels, the other with the shuffled labels. The shuffled set likely will not have the corresponding target images to compute **L1\_Loss**, but can be used as a good source for all other losses, forcing the model to further generalize beyond the limited set of provided examples. Empirically, label shuffling improves the model's generalization on unseen data with better details, and decrease the required number of characters.
-
-You can enable label shuffling by setting **flip_labels=1** option in **train.py** script. It is recommended that you enable this after **d_loss** flatlines around zero, for further tuning.
-
-## Gallery
-### Compare with Ground Truth
-
-<p align="center">
-<img src="assets/compare3.png" alt="compare" width="600"/>
-</p>
-
-### Brush Writing Fonts
-<p align="center">
-<img src="assets/cj_mix.png" alt="brush"  width="600"/>
-</p>
-
-### Cursive Script (Requested by SNS audience)
-<p align="center">
-<img src="assets/cursive.png" alt="cursive"  width="600"/>
-</p>
-
-
-### Mingchao Style (宋体/明朝体)
-<p align="center">
-<img src="assets/mingchao4.png" alt="gaussian"  width="600"/>
-</p>
-
-### Korean
-<p align="center">
-<img src="assets/kr_mix_v2.png" alt="korean"  width="600"/>
-</p>
-
-### Interpolation
-<p align="center">
-  <img src="assets/transition.png" alt="animation",  width="600"/>
-</p>
-
-### Animation
-<p align="center">
-  <img src="assets/poem.gif" alt="animation",  width="250"/>
-  <img src="assets/ko_wiki.gif" alt="animation", width="250"/>
-</p>
-
-<p align="center">
-  <img src="assets/reddit_bonus_humor_easter_egg.gif" alt="easter egg"  width="300"/>
-</p>
-
-
-## How to Use
-### Step Zero
-Download tons of fonts as you please
-### Requirement
-* Python 2.7
-* CUDA
-* cudnn
-* Tensorflow >= 1.0.1
-* Pillow(PIL)
-* numpy >= 1.12.1
-* scipy >= 0.18.1
-* imageio
-
-### Preprocess
-To avoid IO bottleneck, preprocessing is necessary to pickle your data into binary and persist in memory during training.
-
-First run the below command to get the font images:
-
-```sh
-python font2img.py --src_font=src.ttf
-                   --dst_font=tgt.otf
-                   --charset=CN 
-                   --sample_count=1000
-                   --sample_dir=dir
-                   --label=0
-                   --filter=1
-                   --shuffle=1
-```
-Four default charsets are offered: CN, CN_T(traditional), JP, KR. You can also point it to a one line file, it will generate the images of the characters in it. Note, **filter** option is highly recommended, it will pre sample some characters and filter all the images that have the same hash, usually indicating that character is missing. **label** indicating index in the category embeddings that this font associated with, default to 0.
-
-After obtaining all images, run **package.py** to pickle the images and their corresponding labels into binary format:
-
-```sh
-python package.py --dir=image_directories
-                  --save_dir=binary_save_directory
-                  --split_ratio=[0,1]
+* Tensorflow = 1.14.0
+* Pillow
+* numpy
+* scipy = 1.2.1
+* imageio = 2.9.0
 ```
 
-After running this, you will find two objects **train.obj** and **val.obj** under the save_dir for training and validation, respectively.
+#### 建議使用虛擬環境
+*  電腦要有**NVIDIA GPU**
+*  VRAM 要大於 8GB
+*  顯卡不能太新，要支援 CUDA 10.0  
 
-### Experiment Layout
-```sh
-experiment/
-└── data
-    ├── train.obj
-    └── val.obj
+#### 測試 tensorflow-gpu
 ```
-Create a **experiment** directory under the root of the project, and a data directory within it to place the two binaries. Assuming a directory layout enforce bettet data isolation, especially if you have multiple experiments running.
-### Train
-To start training run the following command
-
-```sh
-python train.py --experiment_dir=experiment 
-                --experiment_id=0
-                --batch_size=16 
-                --lr=0.001
-                --epoch=40 
-                --sample_steps=50 
-                --schedule=20 
-                --L1_penalty=100 
-                --Lconst_penalty=15
-```
-**schedule** here means in between how many epochs, the learning rate will decay by half. The train command will create **sample,logs,checkpoint** directory under **experiment_dir** if non-existed, where you can check and manage the progress of your training.
-
-### Infer and Interpolate
-After training is done, run the below command to infer test data:
-
-```sh
-python infer.py --model_dir=checkpoint_dir/ 
-                --batch_size=16 
-                --source_obj=binary_obj_path 
-                --embedding_ids=label[s] of the font, separate by comma
-                --save_dir=save_dir/
+>python
+>>>import tensorflow as tf
+>>>tf.test.is_gpu_available()
 ```
 
-Also you can do interpolation with this command:
 
-```sh
-python infer.py --model_dir= checkpoint_dir/ 
-                --batch_size=10
-                --source_obj=obj_path 
-                --embedding_ids=label[s] of the font, separate by comma
-                --save_dir=frames/ 
-                --output_gif=gif_path 
-                --interpolate=1 
-                --steps=10
-                --uroboros=1
+
+
+---
+<br>
+
+### 前置：製作 charset，指定你想生成的字
+將要 train 的字放入 train.txt
+![image](https://hackmd.io/_uploads/B1t44SLxA.png)
+
+將要 val 的字放入 val.txt
+![image](https://hackmd.io/_uploads/SJH8VrUxR.png)
+
+
+* 做 train 的 json 檔
+```
+python m1_json_train.py.py
+```
+* 做 val 的 json 檔
+```
+python m2_val_train.py.py
+```
+* 合併兩個 json 檔
+```
+python m3_merge_json.py.py
+```
+**執行完會得到 cjk.json 就代表成功！**
+
+
+
+---
+
+<br>
+
+<h2 style="color:green;">程式執行</h2>
+
+### 建立環境
+
+使用下面指令可以直接生成環境！！！！！
+```
+conda env create -f environment.yml
+git clone https://github.com/chiaoooo/zi2zi_tensorflow.git
+cd zi2zi_tensorlow
 ```
 
-It will run through all the pairs of fonts specified in embedding_ids and interpolate the number of steps as specified. 
+####建立 sample 資料夾
 
-### Pretrained Model
-Pretained model can be downloaded [here](https://drive.google.com/open?id=0Bz6mX0EGe2ZuNEFSNWpTQkxPM2c) which is trained with 27 fonts, only generator is saved to reduce the model size. You can use encoder in the this pretrained model to accelerate the training process.
-## Acknowledgements
-Code derived and rehashed from:
+```
+mkdir image_train
+mkdir image_val
+```
 
-* [pix2pix-tensorflow](https://github.com/yenchenlin/pix2pix-tensorflow) by [yenchenlin](https://github.com/yenchenlin)
-* [Domain Transfer Network](https://github.com/yunjey/domain-transfer-network) by [yunjey](https://github.com/yunjey)
-* [ac-gan](https://github.com/buriburisuri/ac-gan) by [buriburisuri](https://github.com/buriburisuri)
-* [dc-gan](https://github.com/carpedm20/DCGAN-tensorflow) by [carpedm20](https://github.com/carpedm20)
-* [origianl pix2pix torch code](https://github.com/phillipi/pix2pix) by [phillipi](https://github.com/phillipi)
+*--srcfont: 來源字體路徑位置
+--dstfont: 目標字體路徑位置
+--charset: 要讀取的字集 e.g. CN、CNT、JP、KR、<font color=red>TWTrain</font>、<font color=red>TWVal</font>
+--samplecount:取幾張圖訓練（數字）
+--sampledir:圖片存放位置（對應 package.py 的 --dir）
+--label: 類別編號，在<font color=red>同模型訓練多字體</font>時需更換，ex: 2、3...
+--shuffle: 是否重新排序字集中文字的排序 e.g. 0: false, 1: true*
 
-## License
-Apache 2.0
+這裡設定<font color=hotpink>**來源字體為源樣黑體，目標字體為 CircleFont，訓練字數 1000 字**</font>。
+
+```
+python font2img.py --src_font=font/GenYoGothicTW-EL-01.ttf --dst_font=font/CircleFont.ttf --charset=TWTrain --sample_count=1000 --sample_dir=image_train --label=1 --filter=1 --shuffle=1
+python font2img.py --src_font=font/GenYoGothicTW-EL-01.ttf --dst_font=font/CircleFont.ttf --charset=TWVal --sample_count=670 --sample_dir=image_val --label=1 --filter=1 --shuffle=0
+```
+
+### 建立訓練、驗證資料 object
+
+**得到 train.obj 和 val.obj 在 save_dir 資料夾**
+
+得到 train.obj
+save_dir 預設 `experiment/data`
+
+```
+python package.py --dir=image_train --save_dir=experiment/data --split_ratio=0.1
+```
+
+得到 val.obj 會在最後驗證步驟 infer.py 用到
+（這裡 --save_dir 與 infer.py 的 --source_obj 相同）
+
+```
+python package.py --dir=image_val --save_dir=experiment/data/val --split_ratio=1
+```
+
+### TRAIN
+
+*--experimentdir: 訓練要存的資料夾（已存在），會在內建立 checkpoint、log、sample 資料夾
+--experimentid: 模型編號（數字）
+--batchsize: 設定 1 epoch ? batch（數字）*
+
+```
+python train.py --experiment_dir=experiment --experiment_id=1 --batch_size=16 --lr=0.001 --epoch=500 --sample_steps=50 --schedule=20 --L1_penalty=100 --Lconst_penalty=15
+```
+
+### 推論結果 INFER
+
+*--modeldir: 訓練後的 checkpoint 資料夾
+--batchsize: 圖片中的文字列數
+--experimentids: 對應 font2img 的 --label 數字（預設 1 代表要推論出 label=1 的驗證資料集）*
+
+```
+python infer.py --model_dir=experiment/checkpoint/experiment_1_batch_16 --batch_size=1 --source_obj=experiment/data/val/val.obj --embedding_ids=1 --save_dir=experiment/infer_1
+```
+
+<p style="color:green;font-weight:bold;">如果要推論沒訓練過的字（沒看過的字）:</p>
+
+把46-56行改成下面這樣
+
+```
+def draw_example(ch, src_font, dst_font, canvas_size, x_offset, y_offset, filter_hashes):
+    dst_img = draw_single_char(ch, dst_font, canvas_size, x_offset, y_offset)
+    # check the filter example in the hashes or not
+    dst_hash = hash(dst_img.tobytes())
+    if dst_hash in filter_hashes:
+        src_img = draw_single_char(ch, src_font, canvas_size, x_offset, y_offset)
+        example_img = Image.new("RGB", (canvas_size * 2, canvas_size), (255, 255, 255))
+        example_img.paste(src_img, (canvas_size, 0))
+        return example_img
+    src_img = draw_single_char(ch, src_font, canvas_size, x_offset, y_offset)
+    example_img = Image.new("RGB", (canvas_size * 2, canvas_size), (255, 255, 255))
+    example_img.paste(dst_img, (0, 0))
+    example_img.paste(src_img, (canvas_size, 0))
+    return example_img
+```
+
+並重新執行　
+* python font2img.py --src_font=font/GenYoGothicTW-EL-01.ttf --dst_font=font/CircleFont.ttf --charset=TWVal --sample_count=670 --sample_dir=image_val --label=1 --filter=1 --shuffle=0
+* python package.py --dir=image_val --save_dir=experiment/data/val --split_ratio=1
+
 
