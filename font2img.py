@@ -43,18 +43,32 @@ def draw_single_char(ch, font, canvas_size, x_offset, y_offset):
     return img
 
 
+# def draw_example(ch, src_font, dst_font, canvas_size, x_offset, y_offset, filter_hashes):
+#     dst_img = draw_single_char(ch, dst_font, canvas_size, x_offset, y_offset)
+#     # check the filter example in the hashes or not
+#     dst_hash = hash(dst_img.tobytes())
+#     if dst_hash in filter_hashes:
+#         return None
+#     src_img = draw_single_char(ch, src_font, canvas_size, x_offset, y_offset)
+#     example_img = Image.new("RGB", (canvas_size * 2, canvas_size), (255, 255, 255))
+#     example_img.paste(dst_img, (0, 0))
+#     example_img.paste(src_img, (canvas_size, 0))
+#     return example_img
+
 def draw_example(ch, src_font, dst_font, canvas_size, x_offset, y_offset, filter_hashes):
     dst_img = draw_single_char(ch, dst_font, canvas_size, x_offset, y_offset)
     # check the filter example in the hashes or not
     dst_hash = hash(dst_img.tobytes())
     if dst_hash in filter_hashes:
-        return None
+        src_img = draw_single_char(ch, src_font, canvas_size, x_offset, y_offset)
+        example_img = Image.new("RGB", (canvas_size * 2, canvas_size), (255, 255, 255))
+        example_img.paste(src_img, (canvas_size, 0))
+        return example_img
     src_img = draw_single_char(ch, src_font, canvas_size, x_offset, y_offset)
     example_img = Image.new("RGB", (canvas_size * 2, canvas_size), (255, 255, 255))
     example_img.paste(dst_img, (0, 0))
     example_img.paste(src_img, (canvas_size, 0))
     return example_img
-
 
 def filter_recurring_hash(charset, font, canvas_size, x_offset, y_offset):
     """ Some characters are missing in a given font, filter them
