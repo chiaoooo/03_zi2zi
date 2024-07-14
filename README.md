@@ -104,8 +104,8 @@ mkdir image_val
 這裡設定<font color=hotpink>**來源字體為源樣黑體，目標字體為 CircleFont，訓練字數 1000 字**</font>。
 
 ```
-python font2img.py --src_font=font/GenYoGothicTW-EL-01.ttf --dst_font=font/CircleFont.ttf --charset=TWTrain --sample_count=1000 --sample_dir=image_train --label=1 --filter=1 --shuffle=1
-python font2img.py --src_font=font/GenYoGothicTW-EL-01.ttf --dst_font=font/CircleFont.ttf --charset=TWVal --sample_count=670 --sample_dir=image_val --label=1 --filter=1 --shuffle=0
+python font2img.py --src_font=font/GenYoGothicTW-EL-01.ttf --dst_font=font/CircleFont.ttf --charset=TWTrain --sample_count=2404 --sample_dir=image_train --label=1 --filter=1 --shuffle=1
+python font2img.py --src_font=font/GenYoGothicTW-EL-01.ttf --dst_font=font/CircleFont.ttf --charset=TWVal --sample_count=13000 --sample_dir=image_val --label=1 --filter=1 --shuffle=0
 ```
 
 ### 建立訓練、驗證資料 object
@@ -133,7 +133,7 @@ python package.py --dir=image_val --save_dir=experiment/data/val --split_ratio=1
 --batchsize: 設定 1 epoch ? batch（數字）*
 
 ```
-python train.py --experiment_dir=experiment --experiment_id=1 --batch_size=16 --lr=0.001 --epoch=500 --sample_steps=50 --schedule=20 --L1_penalty=100 --Lconst_penalty=15
+python train.py --experiment_dir=experiment --experiment_id=1 --batch_size=16 --lr=0.00005 --epoch=1000 --sample_steps=50 --schedule=20 --L1_penalty=100 --Lconst_penalty=15
 ```
 
 ### 推論結果 INFER
