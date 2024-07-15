@@ -1,5 +1,5 @@
 # 定義檔案路徑
-big5_file = 'big5.txt'
+big5_file = 'U.txt'
 train_file = 'train.txt'
 val_file = 'val.txt'
 
